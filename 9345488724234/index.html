@@ -3,17 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="refresh" content="0; url=/e2b488cc8e/">
+  <meta http-equiv="refresh" content="0; url=e2b488cc8e/">
   <title>Redirecionando...</title>
   <script>
     (function () {
-      var destino = '/e2b488cc8e/' + window.location.search + window.location.hash;
+      var base = window.location.pathname.replace(/\/[^\/]*$/, '/');
+      var destino = base + 'e2b488cc8e/' + window.location.search + window.location.hash;
       window.location.replace(destino);
     })();
   </script>
 </head>
 <body>
   <p>Redirecionando para a página principal...</p>
-  <p><a href="/e2b488cc8e/">Clique aqui se a página não abrir automaticamente.</a></p>
+  <p><a href="e2b488cc8e/">Clique aqui se a página não abrir automaticamente.</a></p>
 </body>
 </html>
